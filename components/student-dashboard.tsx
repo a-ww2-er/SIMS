@@ -56,7 +56,7 @@ export function StudentDashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout userType="student" userName={userProfile?.full_name || "Student"}>
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
@@ -66,7 +66,7 @@ export function StudentDashboard() {
 
   if (!student) {
     return (
-      <DashboardLayout userType="student" userName={userProfile?.full_name || "Student"}>
+      <DashboardLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Student profile not found. Please contact administration.</p>
         </div>
@@ -81,7 +81,7 @@ export function StudentDashboard() {
   const degreeProgress = Math.round((totalCredits / 120) * 100) // Assuming 120 credits for degree
 
   return (
-    <DashboardLayout userType="student" userName={student.user?.full_name || "Student"}>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">

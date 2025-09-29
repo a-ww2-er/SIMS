@@ -11,7 +11,7 @@ import { Eye, EyeOff, UserPlus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/auth-context"
 
-export default function RegisterPage() {
+export default function RegisterFacultyPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const router = useRouter()
-  const { signUpStudent } = useAuth()
+  const { signUpFaculty } = useAuth()
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -49,7 +49,7 @@ export default function RegisterPage() {
       return
     }
 
-    const { error: authError } = await signUpStudent(
+    const { error: authError } = await signUpFaculty(
       formData.email,
       formData.password,
       formData.fullName
@@ -61,7 +61,7 @@ export default function RegisterPage() {
       return
     }
 
-    setSuccess("Student registration successful! Please check your email to confirm your account.")
+    setSuccess("Faculty registration successful! Please check your email to confirm your account.")
     setIsLoading(false)
   }
 
@@ -81,50 +81,48 @@ export default function RegisterPage() {
    
              <div className="relative z-10 max-w-lg">
                <div className="flex items-center gap-3 mb-8">
-                 {/* <div className="p-3 bg-primary rounded-xl"> */}
-                   <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pngwing.com%20(4)-15BtszmYBTV6lyTPmnqeCqslMtWz50.png" alt="Logo" className="w-12 h-12" />
-                 {/* </div> */}
+                 <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pngwing.com%20(4)-15BtszmYBTV6lyTPmnqeCqslMtWz50.png" alt="Logo" className="w-12 h-12" />
                  <h1 className="text-3xl font-bold text-white">EduCare SIMS</h1>
                </div>
    
                <h2 className="text-5xl font-bold text-white mb-6 text-balance leading-tight">
-                 {"It's good to be "}
-                 <span className="italic font-serif">learning</span>
+                 {"Join our "}
+                 <span className="italic font-serif">faculty</span>
+                 {" team"}
                </h2>
    
                <p className="text-xl text-white/90 mb-8 text-pretty leading-relaxed">
-                 Empowering educational excellence through comprehensive student information management. Your education,
-                 your future.
+                 Empower the next generation of learners. Join our dedicated faculty community and make a lasting impact on student success.
                </p>
    
                <div className="space-y-4">
-                 <div className="text-white/80 text-lg font-medium">Trusted by 500+ educational institutions</div>
+                 <div className="text-white/80 text-lg font-medium">Trusted by educators worldwide</div>
                  <div className="flex items-center gap-6 text-white/70">
-                   <div className="text-center">
-                     <div className="text-2xl font-bold">2,847</div>
-                     <div className="text-sm">Active Students</div>
-                   </div>
                    <div className="text-center">
                      <div className="text-2xl font-bold">156</div>
                      <div className="text-sm">Faculty Members</div>
                    </div>
                    <div className="text-center">
                      <div className="text-2xl font-bold">342</div>
-                     <div className="text-sm">Courses</div>
+                     <div className="text-sm">Courses Offered</div>
+                   </div>
+                   <div className="text-center">
+                     <div className="text-2xl font-bold">2,847</div>
+                     <div className="text-sm">Students Taught</div>
                    </div>
                  </div>
                </div>
              </div>
            </div>
    
-           {/* Right Side - Login Form */}
+           {/* Right Side - Registration Form */}
            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white/5 backdrop-blur-sm">
              <div className="w-full max-w-md">
              <Card className="w-full max-w-md bg-white shadow-2xl border-0">
         <CardHeader className="space-y-1 text-center pb-8">
-          <CardTitle className="text-3xl font-bold text-secondary">Student Registration</CardTitle>
+          <CardTitle className="text-3xl font-bold text-secondary">Faculty Registration</CardTitle>
           <CardDescription className="text-muted-foreground text-lg">
-            Create your student account
+            Create your faculty account
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8">
@@ -151,7 +149,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Enter your institutional email"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 required
@@ -230,12 +228,12 @@ export default function RegisterPage() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating student account...
+                  Creating faculty account...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-4 h-4" />
-                  Create Student Account
+                  Create Faculty Account
                 </div>
               )}
             </Button>
@@ -252,12 +250,12 @@ export default function RegisterPage() {
               </button>
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Are you a faculty member?{" "}
+              Are you a student?{" "}
               <button
-                onClick={() => router.push("/auth/register-faculty")}
+                onClick={() => router.push("/auth/register")}
                 className="text-primary hover:underline font-medium"
               >
-                Register as Faculty
+                Register as Student
               </button>
             </p>
           </div>
@@ -278,5 +276,4 @@ export default function RegisterPage() {
          </div>
        </div>
      )
-     
 }

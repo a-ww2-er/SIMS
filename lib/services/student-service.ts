@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Student, Enrollment, Grade, Attendance, Announcement } from "@/lib/types/database"
+import type { Student, Enrollment, Grade, Attendance, Announcement, Assignment } from "@/lib/types/database"
 
 export class StudentService {
   private supabase = createClient()
@@ -174,6 +174,21 @@ export class StudentService {
 
     if (error) {
       console.error("Error fetching available courses:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async getCourseAssignments(courseSectionId: string): Promise<Assignment[]> {
+    const { data, error } = await this.supabase
+      .from("assignments")
+      .select("*")
+      .eq("section_id", courseSectionId)
+      .order("due_date", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching course assignments:", error)
       return []
     }
 

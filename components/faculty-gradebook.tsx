@@ -134,7 +134,7 @@ export function FacultyGradebook() {
   }
 
   return (
-    <DashboardLayout userType="faculty" userName="Dr. Joshua Timileyn">
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

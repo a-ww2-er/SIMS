@@ -2,6 +2,8 @@ export type UserRole = "student" | "faculty" | "admin"
 export type EnrollmentStatus = "enrolled" | "completed" | "dropped" | "pending"
 export type GradeStatus = "pending" | "submitted" | "final"
 export type AttendanceStatus = "present" | "absent" | "late" | "excused"
+export type DocumentType = "assignment" | "project" | "exam" | "lab_report" | "presentation" | "other"
+export type DocumentStatus = "pending_review" | "approved" | "rejected" | "revision_required"
 
 export interface User {
   id: string
@@ -156,4 +158,45 @@ export interface Announcement {
   created_at: string
   updated_at: string
   author?: User
+}
+
+export interface DocumentUpload {
+  id: string
+  student_id: string
+  course_section_id: string
+  assignment_id?: string
+  document_type: DocumentType
+  title: string
+  description?: string
+  original_filename: string
+  file_size: number
+  mime_type: string
+  cloudinary_public_id: string
+  cloudinary_url: string
+  cloudinary_secure_url: string
+  status: DocumentStatus
+  faculty_review_notes?: string
+  reviewed_by?: string
+  reviewed_at?: string
+  submitted_at: string
+  updated_at: string
+  student?: Student
+  course_section?: CourseSection
+  assignment?: Assignment
+  reviewed_by_faculty?: Faculty
+}
+
+export interface DocumentVersion {
+  id: string
+  document_upload_id: string
+  version_number: number
+  change_description?: string
+  original_filename: string
+  file_size: number
+  mime_type: string
+  cloudinary_public_id: string
+  cloudinary_url: string
+  cloudinary_secure_url: string
+  uploaded_at: string
+  document_upload?: DocumentUpload
 }

@@ -16,6 +16,8 @@ import {
   X,
   Bell,
   Search,
+  Plus,
+  Upload,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -25,14 +27,15 @@ import { useAuth } from "@/lib/auth/auth-context"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  userType: "student" | "faculty" | "admin"
-  userName: string
 }
 
-export function DashboardLayout({ children, userType, userName }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
-  const { signOut } = useAuth()
+  const { user, userProfile, signOut } = useAuth()
+
+  const userType = userProfile?.role || "student"
+  const userName = userProfile?.full_name || "User"
 
   const handleLogout = async () => {
     await signOut()
@@ -149,7 +152,8 @@ function getNavigationItems(userType: "student" | "faculty" | "admin") {
       return [
         ...baseItems.slice(0, 1),
         { icon: BookOpen, label: "Courses", href: "/student/courses" },
-        { icon: FileText, label: "Grades", href: "/student/grades" },
+        { icon: Upload, label: "Upload", href: "/student/upload" },
+        { icon: FileText, label: "Records", href: "/student/records" },
         // { icon: Calendar, label: "Schedule", href: "/student/schedule" },
         ...baseItems.slice(1),
       ]
@@ -157,6 +161,8 @@ function getNavigationItems(userType: "student" | "faculty" | "admin") {
       return [
         ...baseItems.slice(0, 1),
         { icon: BookOpen, label: "My Courses", href: "/faculty/courses" },
+        { icon: Plus, label: "Register Course", href: "/faculty/register-course" },
+        { icon: Upload, label: "Student Uploads", href: "/faculty/uploads" },
         { icon: FileText, label: "Gradebook", href: "/faculty/gradebook" },
         // { icon: Calendar, label: "Schedule", href: "/faculty/schedule" },
         ...baseItems.slice(1),

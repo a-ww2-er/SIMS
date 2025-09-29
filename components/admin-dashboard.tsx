@@ -59,7 +59,7 @@ export function AdminDashboard() {
   ]
 
   return (
-    <DashboardLayout userType="admin" userName={adminData.name}>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">

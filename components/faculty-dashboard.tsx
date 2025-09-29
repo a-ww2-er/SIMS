@@ -3,45 +3,60 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, Clock, TrendingUp, AlertCircle, CheckCircle } from "lucide-react"
+import { BookOpen, Clock, TrendingUp, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth/auth-context"
+import { FacultyService } from "@/lib/services/faculty-service"
+import type { Faculty, CourseSection } from "@/lib/types/database"
 
 export function FacultyDashboard() {
-  const facultyData = {
-    name: "Dr. Joshua Timileyn",
-    employeeId: "FAC2024001",
-    department: "Computer Science",
-    title: "Associate Professor",
-    coursesThisSemester: 3,
-    totalStudents: 127,
+  const { user, userProfile } = useAuth()
+  const [facultyProfile, setFacultyProfile] = useState<Faculty | null>(null)
+  const [courses, setCourses] = useState<CourseSection[]>([])
+  const [pendingGrades, setPendingGrades] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  const facultyService = new FacultyService()
+
+  useEffect(() => {
+    if (user) {
+      loadFacultyData()
+    }
+  }, [user])
+
+  const loadFacultyData = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+
+      // Load faculty profile and courses in parallel
+      const [profile, facultyCourses, grades] = await Promise.all([
+        facultyService.getFacultyProfile(user.id),
+        facultyService.getFacultyCourses(user.id),
+        facultyService.getPendingGrades(user.id)
+      ])
+
+      setFacultyProfile(profile)
+      setCourses(facultyCourses)
+      setPendingGrades(grades.length)
+    } catch (error) {
+      console.error("Error loading faculty data:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const courses = [
-    {
-      code: "CS301",
-      name: "Data Structures",
-      students: 45,
-      schedule: "MWF 10:00-11:00",
-      pendingGrades: 12,
-      nextClass: "Today 10:00 AM",
-    },
-    {
-      code: "CS401",
-      name: "Advanced Algorithms",
-      students: 32,
-      schedule: "TTh 2:00-3:30",
-      pendingGrades: 8,
-      nextClass: "Tomorrow 2:00 PM",
-    },
-    {
-      code: "CS501",
-      name: "Machine Learning",
-      students: 50,
-      schedule: "MWF 1:00-2:00",
-      pendingGrades: 15,
-      nextClass: "Today 1:00 PM",
-    },
-  ]
+  const facultyData = {
+    name: facultyProfile?.user?.full_name || userProfile?.full_name || "Faculty Member",
+    employeeId: facultyProfile?.employee_id || "Loading...",
+    department: facultyProfile?.department || "Loading...",
+    title: facultyProfile?.position || "Loading...",
+    coursesThisSemester: courses.length,
+    totalStudents: courses.reduce((sum, course) => sum + course.current_enrollment, 0),
+  }
+
 
   const upcomingTasks = [
     { title: "Grade CS301 Midterm Exams", dueDate: "Oct 15", priority: "high", type: "grading" },
@@ -64,7 +79,7 @@ export function FacultyDashboard() {
   ]
 
   return (
-    <DashboardLayout userType="faculty" userName={facultyData.name}>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-secondary to-secondary/80 rounded-xl p-6 text-secondary-foreground">
@@ -106,7 +121,7 @@ export function FacultyDashboard() {
             <CardContent className="p-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-destructive mb-2">
-                  {courses.reduce((sum, course) => sum + course.pendingGrades, 0)}
+                  {pendingGrades}
                 </div>
                 <div className="text-sm text-muted-foreground font-medium">Pending Grades</div>
               </div>
@@ -136,29 +151,50 @@ export function FacultyDashboard() {
               <CardDescription>Courses you're teaching this semester</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {courses.map((course) => (
-                <div key={course.code} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h4 className="font-semibold">{course.code}</h4>
-                      <p className="text-sm text-muted-foreground">{course.name}</p>
-                      <p className="text-xs text-muted-foreground">{course.schedule}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold">{course.students}</div>
-                      <div className="text-xs text-muted-foreground">Students</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Next class: {course.nextClass}</span>
-                    {course.pendingGrades > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        {course.pendingGrades} pending grades
-                      </Badge>
-                    )}
-                  </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="ml-2">Loading courses...</span>
                 </div>
-              ))}
+              ) : courses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No courses assigned.
+                </div>
+              ) : (
+                courses.map((section) => {
+                  const course = section.course
+
+                  if (!course) return null
+
+                  return (
+                    <div key={section.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{course.course_code}</h4>
+                          <p className="text-sm text-muted-foreground">{course.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {section.schedule ? `${section.schedule.days.join(', ')} ${section.schedule.time}` : "TBD"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold">{section.current_enrollment}</div>
+                          <div className="text-xs text-muted-foreground">Students</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {section.semester} {section.year}
+                        </span>
+                        {pendingGrades > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            Grades pending
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </CardContent>
           </Card>
 

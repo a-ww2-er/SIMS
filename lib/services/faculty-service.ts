@@ -1,0 +1,203 @@
+import { createClient } from "@/lib/supabase/client"
+import type { Faculty, CourseSection, Enrollment, Assignment, Grade, Announcement } from "@/lib/types/database"
+
+export class FacultyService {
+  private supabase = createClient()
+
+  async getFacultyProfile(userId: string): Promise<Faculty | null> {
+    const { data, error } = await this.supabase
+      .from("faculty")
+      .select(`
+        *,
+        user:users(*)
+      `)
+      .eq("user_id", userId)
+      .single()
+
+    if (error) {
+      console.error("Error fetching faculty profile:", error)
+      return null
+    }
+
+    return data
+  }
+
+  async getFacultyCourses(facultyId: string): Promise<CourseSection[]> {
+    const { data, error } = await this.supabase
+      .from("course_sections")
+      .select(`
+        *,
+        course:courses(*),
+        enrollments:enrollments(count)
+      `)
+      .eq("faculty_id", facultyId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching faculty courses:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async getCourseEnrollments(sectionId: string): Promise<Enrollment[]> {
+    const { data, error } = await this.supabase
+      .from("enrollments")
+      .select(`
+        *,
+        student:students(
+          *,
+          user:users(*)
+        )
+      `)
+      .eq("section_id", sectionId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching course enrollments:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async getCourseAssignments(sectionId: string): Promise<Assignment[]> {
+    const { data, error } = await this.supabase
+      .from("assignments")
+      .select("*")
+      .eq("section_id", sectionId)
+      .order("due_date", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching course assignments:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async getPendingGrades(facultyId: string): Promise<Grade[]> {
+    // Get all sections taught by this faculty
+    const { data: sections } = await this.supabase
+      .from("course_sections")
+      .select("id")
+      .eq("faculty_id", facultyId)
+
+    if (!sections || sections.length === 0) return []
+
+    const sectionIds = sections.map(s => s.id)
+
+    const { data, error } = await this.supabase
+      .from("grades")
+      .select(`
+        *,
+        assignment:assignments(
+          *,
+          section:course_sections(
+            *,
+            course:courses(*)
+          )
+        ),
+        student:students(
+          *,
+          user:users(*)
+        )
+      `)
+      .in("assignment.section_id", sectionIds)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching pending grades:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async createAssignment(sectionId: string, assignment: {
+    title: string
+    description?: string
+    type: string
+    total_points: number
+    due_date?: string
+  }): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase.from("assignments").insert({
+      section_id: sectionId,
+      ...assignment,
+    })
+
+    if (error) {
+      console.error("Error creating assignment:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async updateAssignment(assignmentId: string, updates: Partial<Assignment>): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase
+      .from("assignments")
+      .update(updates)
+      .eq("id", assignmentId)
+
+    if (error) {
+      console.error("Error updating assignment:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async submitGrade(gradeId: string, pointsEarned: number, feedback?: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase
+      .from("grades")
+      .update({
+        points_earned: pointsEarned,
+        feedback,
+        status: "submitted",
+        graded_at: new Date().toISOString(),
+      })
+      .eq("id", gradeId)
+
+    if (error) {
+      console.error("Error submitting grade:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async createAnnouncement(announcement: {
+    title: string
+    content: string
+    target_audience: string
+    target_id?: string
+    priority?: string
+    expires_at?: string
+  }, authorId: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase.from("announcements").insert({
+      ...announcement,
+      author_id: authorId,
+    })
+
+    if (error) {
+      console.error("Error creating announcement:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async updateProfile(facultyId: string, updates: Partial<Faculty>): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase.from("faculty").update(updates).eq("id", facultyId)
+
+    if (error) {
+      console.error("Error updating faculty profile:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+}

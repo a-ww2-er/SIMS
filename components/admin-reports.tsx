@@ -100,7 +100,7 @@ export function AdminReports() {
   ]
 
   return (
-    <DashboardLayout userType="admin" userName="Dr.Binyami Ajayi">
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
