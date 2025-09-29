@@ -11,6 +11,7 @@ import { Eye, EyeOff, LogIn } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -20,7 +21,9 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const { signIn, userProfile } = useAuth()
+  const { signIn, userProfile, user } = useAuth()
+  const supabase = createClient()
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,20 +38,18 @@ export function LoginForm() {
       return
     }
 
-    // Wait for auth state to update and redirect based on user role
-    setTimeout(() => {
-      if (userProfile?.role === 'student') {
-        router.push('/student/dashboard')
-      } else if (userProfile?.role === 'faculty') {
-        router.push('/faculty/dashboard')
-      } else if (userProfile?.role === 'admin') {
-        router.push('/admin/dashboard')
-      } else {
-        // Default fallback
-        router.push('/student/dashboard')
-      }
-      setIsLoading(false)
-    }, 1500) // Give more time for profile to load
+    // Redirect immediately based on user metadata (should be available after login)
+    const userRole = user?.user_metadata?.role || 'student'
+
+    if (userRole === 'faculty') {
+      router.push('/faculty/dashboard')
+    } else if (userRole === 'admin') {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/student/dashboard')
+    }
+
+    setIsLoading(false)
   }
 
   return (
@@ -127,11 +128,19 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            No account? <button 
+            No account? <button
             onClick={()=> router.push('auth/register')}
             className="text-primary hover:underline font-medium">Register here</button>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            <button
+              onClick={() => router.push('/auth/forgot-password')}
+              className="text-primary hover:underline font-medium"
+            >
+              Forgot your password?
+            </button>
           </p>
         </div>
       </CardContent>

@@ -17,12 +17,12 @@ INSERT INTO public.courses (id, course_code, title, description, credits, depart
 -- when users sign up and are assigned roles
 
 -- Insert sample course sections (these would typically be created by admins)
-INSERT INTO public.course_sections (id, course_id, section_number, semester, year, max_enrollment, schedule) VALUES
-  ('750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', '001', 'Fall', 2024, 30, '{"days": ["Mon", "Wed", "Fri"], "time": "09:00-09:50", "room": "CS101"}'),
-  ('750e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440002', '001', 'Fall', 2024, 25, '{"days": ["Tue", "Thu"], "time": "10:00-11:30", "room": "CS201"}'),
-  ('750e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440003', '001', 'Fall', 2024, 35, '{"days": ["Mon", "Wed", "Fri"], "time": "11:00-11:50", "room": "MATH101"}'),
-  ('750e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440004', '001', 'Fall', 2024, 30, '{"days": ["Tue", "Thu"], "time": "14:00-15:30", "room": "PHYS101"}'),
-  ('750e8400-e29b-41d4-a716-446655440005', '650e8400-e29b-41d4-a716-446655440005', '001', 'Fall', 2024, 40, '{"days": ["Mon", "Wed"], "time": "13:00-14:30", "room": "BUS101"}');
+INSERT INTO public.course_sections (id, course_id, section_number, semester, year, faculty_id, max_enrollment, schedule) VALUES
+   ('750e8400-e29b-41d4-a716-446655440001', '650e8400-e29b-41d4-a716-446655440001', '001', 'Fall', 2024, 'c50e8400-e29b-41d4-a716-446655440001', 30, '{"days": ["Mon", "Wed", "Fri"], "time": "09:00-09:50", "room": "CS101"}'),
+   ('750e8400-e29b-41d4-a716-446655440002', '650e8400-e29b-41d4-a716-446655440002', '001', 'Fall', 2024, 'c50e8400-e29b-41d4-a716-446655440001', 25, '{"days": ["Tue", "Thu"], "time": "10:00-11:30", "room": "CS201"}'),
+   ('750e8400-e29b-41d4-a716-446655440003', '650e8400-e29b-41d4-a716-446655440003', '001', 'Fall', 2024, NULL, 35, '{"days": ["Mon", "Wed", "Fri"], "time": "11:00-11:50", "room": "MATH101"}'),
+   ('750e8400-e29b-41d4-a716-446655440004', '650e8400-e29b-41d4-a716-446655440004', '001', 'Fall', 2024, NULL, 30, '{"days": ["Tue", "Thu"], "time": "14:00-15:30", "room": "PHYS101"}'),
+   ('750e8400-e29b-41d4-a716-446655440005', '650e8400-e29b-41d4-a716-446655440005', '001', 'Fall', 2024, 'c50e8400-e29b-41d4-a716-446655440002', 40, '{"days": ["Mon", "Wed"], "time": "13:00-14:30", "room": "BUS101"}');
 
 -- Insert sample assignments
 INSERT INTO public.assignments (id, section_id, title, description, type, total_points, due_date) VALUES

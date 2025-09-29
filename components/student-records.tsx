@@ -239,9 +239,9 @@ export function StudentRecords() {
                                 >
                                   <Download className="w-3 h-3" />
                                 </Button>
-                                <Button size="sm" variant="outline">
+                                {/* <Button size="sm" variant="outline">
                                   <Eye className="w-3 h-3" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

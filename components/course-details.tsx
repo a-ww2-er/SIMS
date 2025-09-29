@@ -51,7 +51,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
         `)
         .eq("id", courseId)
         .single()
-
+console.log(courseData,courseId)
       if (courseError) throw courseError
       setCourse(courseData)
 
@@ -201,7 +201,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
 
                     {section.faculty && (
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
+                        {/* <User className="w-4 h-4 text-muted-foreground" /> */}
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Instructor</Label>
                           <p>{section.faculty.user?.full_name}</p>
@@ -213,7 +213,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
                   {section.schedule && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        {/* <Clock className="w-4 h-4 text-muted-foreground" /> */}
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Time</Label>
                           <p>{section.schedule.time}</p>
@@ -221,7 +221,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        {/* <MapPin className="w-4 h-4 text-muted-foreground" /> */}
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Room</Label>
                           <p>{section.schedule.room}</p>
@@ -248,7 +248,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
@@ -273,7 +273,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
                   </>
                 )}
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Enrollment List (Faculty Only) */}
             {userType === "faculty" && enrollments.length > 0 && (

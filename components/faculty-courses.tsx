@@ -185,7 +185,7 @@ export function FacultyCourses() {
                 if (!course) return null
 
                 return (
-                  <Link key={section.id} href={`/faculty/course/${course.id}?sectionId=${section.id}`}>
+                  <Link key={section.id} href={`/faculty/course/${section.id}`}>
                     <div className="border rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -232,16 +232,16 @@ export function FacultyCourses() {
                         <Button size="sm">Manage Course</Button>
                         <Button size="sm" variant="outline">
                           <Users className="w-4 h-4 mr-2" />
-                          View Students
+                          {section.current_enrollment} Students
                         </Button>
-                        <Button size="sm" variant="outline">
+                        {/* <Button size="sm" variant="outline">
                           <FileText className="w-4 h-4 mr-2" />
                           Gradebook
-                        </Button>
-                        <Button size="sm" variant="outline">
+                        </Button> */}
+                        {/* <Button size="sm" variant="outline">
                           <Settings className="w-4 h-4 mr-2" />
                           Settings
-                        </Button>
+                        </Button> */}
                       </div>
                     </div>
                   </Link>

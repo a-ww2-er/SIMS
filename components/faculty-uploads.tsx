@@ -38,15 +38,11 @@ export function FacultyUploads() {
     try {
       setLoading(true)
 
-      // Get faculty profile
-      const facultyProfile = await facultyService.getFacultyProfile(user.id)
-      if (!facultyProfile) return
-
-      // Load all uploads for courses taught by this faculty
-      const uploadsData = await documentService.getFacultyUploads(facultyProfile.id)
+      // Load all uploads (both faculty and admins can see all uploads)
+      const uploadsData = await documentService.getAllUploads()
       setUploads(uploadsData)
     } catch (error) {
-      console.error("Error loading faculty uploads:", error)
+      console.error("Error loading uploads:", error)
     } finally {
       setLoading(false)
     }
@@ -67,11 +63,15 @@ export function FacultyUploads() {
     try {
       setUpdatingStatus(documentId)
 
+      // Check if user is faculty (only faculty get recorded as reviewers)
+      const facultyProfile = await facultyService.getFacultyProfile(user!.id)
+      const reviewerId = facultyProfile ? facultyProfile.id : undefined
+
       const result = await documentService.updateDocumentStatus(
         documentId,
         status,
         reviewNotes.trim() || undefined,
-        user?.id
+        reviewerId
       )
 
       if (result.success) {

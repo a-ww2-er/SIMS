@@ -24,8 +24,8 @@ export default function HomePage() {
             </div>
 
             <h2 className="text-5xl font-bold text-white mb-6 text-balance leading-tight">
-              {"It's good to be "}
-              <span className="italic font-serif">learning</span>
+              {"Making you access records "}
+              <span className="italic font-serif">Better</span>
             </h2>
 
             <p className="text-xl text-white/90 mb-8 text-pretty leading-relaxed">

@@ -58,26 +58,26 @@ export function FacultyDashboard() {
   }
 
 
-  const upcomingTasks = [
-    { title: "Grade CS301 Midterm Exams", dueDate: "Oct 15", priority: "high", type: "grading" },
-    { title: "Prepare CS401 Lecture Notes", dueDate: "Oct 16", priority: "medium", type: "preparation" },
-    { title: "Faculty Meeting", dueDate: "Oct 18", priority: "low", type: "meeting" },
-    { title: "Submit Grade Reports", dueDate: "Oct 20", priority: "high", type: "administrative" },
-  ]
+  const upcomingTasks = []
+    // { title: "Grade CS301 Midterm Exams", dueDate: "Oct 15", priority: "high", type: "grading" },
+    // { title: "Prepare CS401 Lecture Notes", dueDate: "Oct 16", priority: "medium", type: "preparation" },
+    // { title: "Faculty Meeting", dueDate: "Oct 18", priority: "low", type: "meeting" },
+    // { title: "Submit Grade Reports", dueDate: "Oct 20", priority: "high", type: "administrative" },
+  // ]
 
-  const recentActivity = [
-    { action: "Graded Assignment 3", course: "CS301", time: "2 hours ago" },
-    { action: "Posted new lecture materials", course: "CS501", time: "4 hours ago" },
-    { action: "Responded to student questions", course: "CS401", time: "6 hours ago" },
-    { action: "Updated course syllabus", course: "CS301", time: "1 day ago" },
-  ]
+  const recentActivity = []
+ // { action: "Graded Assignment 3", course: "CS301", time: "2 hours ago" },
+ // { action: "Posted new lecture materials", course: "CS501", time: "4 hours ago" },
+// { action: "Responded to student questions", course: "CS401", time: "6 hours ago" },
+// { action: "Updated course syllabus", course: "CS301", time: "1 day ago" },
+  
 
-  const studentPerformance = [
-    { course: "CS301", avgGrade: 82, trend: "up", atRisk: 3 },
-    { course: "CS401", avgGrade: 78, trend: "stable", atRisk: 5 },
-    { course: "CS501", avgGrade: 85, trend: "up", atRisk: 2 },
-  ]
-
+  const studentPerformance = []
+ // { course: "CS301", avgGrade: 82, trend: "up", atRisk: 3 },
+// { course: "CS401", avgGrade: 78, trend: "stable", atRisk: 5 },
+    // { course: "CS501", avgGrade: 85, trend: "up", atRisk: 2 },
+  // ]
+  
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -145,7 +145,7 @@ export function FacultyDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
+                {/* <BookOpen className="w-5 h-5" /> */}
                 My Courses
               </CardTitle>
               <CardDescription>Courses you're teaching this semester</CardDescription>
@@ -199,10 +199,9 @@ export function FacultyDashboard() {
           </Card>
 
           {/* Upcoming Tasks */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
                 Upcoming Tasks
               </CardTitle>
               <CardDescription>Your pending tasks and deadlines</CardDescription>
@@ -234,21 +233,17 @@ export function FacultyDashboard() {
                 </div>
               ))}
             </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Student Performance Overview */}
-          <Card>
+          </Card> */}
+             <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
+                {/* <TrendingUp className="w-5 h-5" /> */}
                 Student Performance
               </CardTitle>
               <CardDescription>Class averages and at-risk students</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {studentPerformance.map((perf) => (
+              {studentPerformance && studentPerformance.map((perf) => (
                 <div key={perf.course} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold">{perf.course}</h4>
@@ -278,11 +273,16 @@ export function FacultyDashboard() {
             </CardContent>
           </Card>
 
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Student Performance Overview */}
+       
           {/* Recent Activity */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
+      
                 Recent Activity
               </CardTitle>
               <CardDescription>Your recent actions and updates</CardDescription>
@@ -299,7 +299,7 @@ export function FacultyDashboard() {
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </DashboardLayout>

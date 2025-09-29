@@ -43,7 +43,7 @@ CREATE TABLE public.document_uploads (
   -- Status and review
   status document_status NOT NULL DEFAULT 'pending_review',
   faculty_review_notes TEXT,
-  reviewed_by UUID REFERENCES public.faculty(id),
+  reviewed_by UUID REFERENCES public.faculty(id), -- Nullable for admin reviews
   reviewed_at TIMESTAMP WITH TIME ZONE,
 
   -- Submission info
@@ -109,21 +109,29 @@ CREATE POLICY "Students can update own uploads" ON public.document_uploads
     SELECT id FROM public.students WHERE user_id = auth.uid()
   ));
 
--- Faculty can view all uploads (for admin purposes - they can review any student documents)
-CREATE POLICY "Faculty can view all uploads" ON public.document_uploads
+-- Faculty and admins can view all uploads (for admin purposes - they can review any student documents)
+CREATE POLICY "Faculty and admins can view all uploads" ON public.document_uploads
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM public.faculty f
       WHERE f.user_id = auth.uid()
+    ) OR
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.id = auth.uid() AND u.role = 'admin'
     )
   );
 
--- Faculty can update all uploads (for review)
-CREATE POLICY "Faculty can update all uploads" ON public.document_uploads
+-- Faculty and admins can update all uploads (for review)
+CREATE POLICY "Faculty and admins can update all uploads" ON public.document_uploads
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM public.faculty f
       WHERE f.user_id = auth.uid()
+    ) OR
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.id = auth.uid() AND u.role = 'admin'
     )
   );
 

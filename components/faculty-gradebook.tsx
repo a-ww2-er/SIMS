@@ -1,136 +1,143 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { BookOpen, Users, FileText, Download, Search, Plus, Edit, Save } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { useState } from "react"
+import { useAuth } from "@/lib/auth/auth-context"
+import { FacultyService } from "@/lib/services/faculty-service"
+import { BookOpen, Users, GraduationCap, Save, MessageSquare, Loader2 } from "lucide-react"
+import type { CourseSection, Enrollment, Assignment, Grade } from "@/lib/types/database"
 
 export function FacultyGradebook() {
-  const [selectedCourse, setSelectedCourse] = useState("CS301")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [editingGrade, setEditingGrade] = useState<string | null>(null)
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [courses, setCourses] = useState<CourseSection[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<CourseSection | null>(null)
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [selectedStudent, setSelectedStudent] = useState<Enrollment | null>(null)
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
+  const [gradeValue, setGradeValue] = useState("")
+  const [feedback, setFeedback] = useState("")
+  const [savingGrade, setSavingGrade] = useState(false)
 
-  const courses = [
-    { code: "CS301", name: "Data Structures", students: 45 },
-    { code: "CS401", name: "Advanced Algorithms", students: 32 },
-    { code: "CS501", name: "Machine Learning", students: 28 },
-  ]
+  const facultyService = new FacultyService()
 
-  const assignments = [
-    { id: "a1", name: "Assignment 1", type: "homework", maxPoints: 100, dueDate: "Sep 15", weight: 10 },
-    { id: "a2", name: "Assignment 2", type: "homework", maxPoints: 100, dueDate: "Sep 29", weight: 10 },
-    { id: "midterm", name: "Midterm Exam", type: "exam", maxPoints: 100, dueDate: "Oct 8", weight: 25 },
-    { id: "a3", name: "Assignment 3", type: "homework", maxPoints: 100, dueDate: "Oct 12", weight: 10 },
-    { id: "project", name: "Final Project", type: "project", maxPoints: 100, dueDate: "Nov 15", weight: 30 },
-    { id: "final", name: "Final Exam", type: "exam", maxPoints: 100, dueDate: "Dec 10", weight: 15 },
-  ]
+  useEffect(() => {
+    if (user) {
+      loadFacultyCourses()
+    }
+  }, [user])
 
-  const students = [
-    {
-      id: "s1",
-      name: "Alice Johnson",
-      email: "alice.johnson@university.edu",
-      studentId: "STU2024001",
-      grades: {
-        a1: 95,
-        a2: 88,
-        midterm: 89,
-        a3: 94,
-        project: null,
-        final: null,
-      },
-      currentGrade: "A-",
-      attendance: 95,
-    },
-    {
-      id: "s2",
-      name: "Bob Smith",
-      email: "bob.smith@university.edu",
-      studentId: "STU2024002",
-      grades: {
-        a1: 82,
-        a2: 85,
-        midterm: 78,
-        a3: 88,
-        project: null,
-        final: null,
-      },
-      currentGrade: "B+",
-      attendance: 88,
-    },
-    {
-      id: "s3",
-      name: "Carol Davis",
-      email: "carol.davis@university.edu",
-      studentId: "STU2024003",
-      grades: {
-        a1: 98,
-        a2: 92,
-        midterm: 95,
-        a3: 97,
-        project: null,
-        final: null,
-      },
-      currentGrade: "A",
-      attendance: 100,
-    },
-    {
-      id: "s4",
-      name: "David Wilson",
-      email: "david.wilson@university.edu",
-      studentId: "STU2024004",
-      grades: {
-        a1: 75,
-        a2: 78,
-        midterm: 72,
-        a3: 80,
-        project: null,
-        final: null,
-      },
-      currentGrade: "C+",
-      attendance: 82,
-    },
-    {
-      id: "s5",
-      name: "Eva Brown",
-      email: "eva.brown@university.edu",
-      studentId: "STU2024005",
-      grades: {
-        a1: 90,
-        a2: 87,
-        midterm: 85,
-        a3: 92,
-        project: null,
-        final: null,
-      },
-      currentGrade: "B+",
-      attendance: 92,
-    },
-  ]
+  useEffect(() => {
+    if (selectedCourse) {
+      loadCourseData(selectedCourse.id)
+    }
+  }, [selectedCourse])
 
-  const filteredStudents = students.filter(
-    (student) =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.studentId.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const loadFacultyCourses = async () => {
+    if (!user) return
 
-  const getGradeBadgeVariant = (grade: string) => {
-    if (grade.startsWith("A")) return "default"
-    if (grade.startsWith("B")) return "secondary"
-    if (grade.startsWith("C")) return "outline"
-    return "destructive"
+    try {
+      setLoading(true)
+      const facultyProfile = await facultyService.getFacultyProfile(user.id)
+      if (!facultyProfile) return
+
+      const coursesData = await facultyService.getFacultyCourses(facultyProfile.id)
+      setCourses(coursesData)
+    } catch (error) {
+      console.error("Error loading faculty courses:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const calculateClassAverage = (assignmentId: string) => {
-    const grades = students
-      .map((s) => s.grades[assignmentId as keyof typeof s.grades])
-      .filter((g) => g !== null) as number[]
-    return grades.length > 0 ? Math.round(grades.reduce((sum, grade) => sum + grade, 0) / grades.length) : 0
+  const loadCourseData = async (courseId: string) => {
+    try {
+      const [enrollmentsData, assignmentsData, gradesData] = await Promise.all([
+        facultyService.getCourseEnrollments(courseId),
+        facultyService.getCourseAssignments(courseId),
+        facultyService.getGradesForCourse(courseId)
+      ])
+
+      setEnrollments(enrollmentsData)
+      setAssignments(assignmentsData)
+      setGrades(gradesData)
+    } catch (error) {
+      console.error("Error loading course data:", error)
+    }
+  }
+
+  const submitGrade = async () => {
+    if (!selectedStudent || !selectedAssignment || !gradeValue.trim()) return
+
+    try {
+      setSavingGrade(true)
+
+      // Find or create grade record
+      const existingGrade = grades.find(
+        g => g.student_id === selectedStudent.student_id && g.assignment_id === selectedAssignment.id
+      )
+
+      if (existingGrade) {
+        // Update existing grade
+        await facultyService.updateGrade(existingGrade.id, {
+          points_earned: parseFloat(gradeValue),
+          feedback: feedback.trim() || undefined,
+          status: 'submitted',
+          graded_at: new Date().toISOString()
+        })
+      } else {
+        // Create new grade
+        await facultyService.createGrade({
+          student_id: selectedStudent.student_id,
+          assignment_id: selectedAssignment.id,
+          points_earned: parseFloat(gradeValue),
+          feedback: feedback.trim() || undefined,
+          status: 'submitted'
+        })
+      }
+
+      // Reload course data
+      if (selectedCourse) {
+        await loadCourseData(selectedCourse.id)
+      }
+
+      // Reset form
+      setGradeValue("")
+      setFeedback("")
+      setSelectedStudent(null)
+      setSelectedAssignment(null)
+    } catch (error) {
+      console.error("Error submitting grade:", error)
+      alert("Failed to submit grade")
+    } finally {
+      setSavingGrade(false)
+    }
+  }
+
+  const getGradeForStudent = (studentId: string, assignmentId: string) => {
+    return grades.find(g => g.student_id === studentId && g.assignment_id === assignmentId)
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="ml-2">Loading gradebook...</span>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -140,212 +147,212 @@ export function FacultyGradebook() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Gradebook</h1>
-            <p className="text-muted-foreground">Manage grades and track student performance</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Assignment
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export Grades
-            </Button>
+            <p className="text-muted-foreground">Manage student grades and assignments</p>
           </div>
         </div>
 
-        {/* Course Selection and Search */}
-        <div className="flex items-center gap-4">
-          <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.map((course) => (
-                <SelectItem key={course.code} value={course.code}>
-                  {course.code} - {course.name} ({course.students} students)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search students..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Grade Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{filteredStudents.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Students</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent/10 rounded-lg">
-                  <FileText className="w-5 h-5 text-accent" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{assignments.length}</div>
-                  <div className="text-sm text-muted-foreground">Assignments</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-secondary/10 rounded-lg">
-                  <BookOpen className="w-5 h-5 text-secondary" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {Math.round(
-                      filteredStudents.reduce((sum, student) => {
-                        const grades = Object.values(student.grades).filter((g) => g !== null) as number[]
-                        return sum + (grades.length > 0 ? grades.reduce((a, b) => a + b, 0) / grades.length : 0)
-                      }, 0) / filteredStudents.length,
-                    )}
-                    %
-                  </div>
-                  <div className="text-sm text-muted-foreground">Class Average</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-destructive/10 rounded-lg">
-                  <Edit className="w-5 h-5 text-destructive" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">
-                    {
-                      filteredStudents.filter((student) =>
-                        Object.values(student.grades).some((grade) => grade === null),
-                      ).length
-                    }
-                  </div>
-                  <div className="text-sm text-muted-foreground">Pending Grades</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Gradebook Table */}
+        {/* Course Selection */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Grade Matrix
+              <BookOpen className="w-5 h-5" />
+              Select Course
             </CardTitle>
-            <CardDescription>Click on any grade to edit it</CardDescription>
+            <CardDescription>
+              Choose a course to view and manage student grades
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-48">Student</TableHead>
-                    <TableHead className="w-24">ID</TableHead>
-                    {assignments.map((assignment) => (
-                      <TableHead key={assignment.id} className="text-center min-w-20">
-                        <div className="space-y-1">
-                          <div className="font-medium">{assignment.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {assignment.maxPoints}pts • {assignment.weight}%
-                          </div>
-                          <div className="text-xs text-primary">Avg: {calculateClassAverage(assignment.id)}%</div>
-                        </div>
-                      </TableHead>
-                    ))}
-                    <TableHead className="text-center">Current Grade</TableHead>
-                    <TableHead className="text-center">Attendance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStudents.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{student.name}</div>
-                          <div className="text-sm text-muted-foreground">{student.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{student.studentId}</TableCell>
-                      {assignments.map((assignment) => {
-                        const grade = student.grades[assignment.id as keyof typeof student.grades]
-                        const cellKey = `${student.id}-${assignment.id}`
-                        return (
-                          <TableCell key={assignment.id} className="text-center">
-                            {editingGrade === cellKey ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={assignment.maxPoints}
-                                  defaultValue={grade || ""}
-                                  className="w-16 h-8 text-center"
-                                  onBlur={() => setEditingGrade(null)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") setEditingGrade(null)
-                                  }}
-                                />
-                                <Button size="sm" variant="ghost" onClick={() => setEditingGrade(null)}>
-                                  <Save className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setEditingGrade(cellKey)}
-                                className="hover:bg-muted rounded px-2 py-1 min-w-12"
-                              >
-                                {grade !== null ? (
-                                  <span className={grade >= 90 ? "text-accent font-medium" : ""}>{grade}</span>
+            <Select
+              value={selectedCourse?.id || ""}
+              onValueChange={(value) => {
+                const course = courses.find(c => c.id === value)
+                setSelectedCourse(course || null)
+              }}
+            >
+              <SelectTrigger className="w-full max-w-md">
+                <SelectValue placeholder="Select a course..." />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    {course.course?.course_code} - {course.course?.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        {/* Gradebook Table */}
+        {selectedCourse && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="w-5 h-5" />
+                {selectedCourse.course?.course_code} - {selectedCourse.course?.title}
+              </CardTitle>
+              <CardDescription>
+                {enrollments.length} enrolled students
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {enrollments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No students enrolled in this course yet.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Student ID</TableHead>
+                        {assignments.map((assignment) => (
+                          <TableHead key={assignment.id} className="text-center">
+                            {assignment.title}
+                            <br />
+                            <span className="text-xs text-muted-foreground">
+                              ({assignment.total_points} pts)
+                            </span>
+                          </TableHead>
+                        ))}
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {enrollments.map((enrollment) => (
+                        <TableRow key={enrollment.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{enrollment.student?.user?.full_name}</p>
+                              <p className="text-sm text-muted-foreground">{enrollment.student?.user?.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{enrollment.student?.student_id}</TableCell>
+                          {assignments.map((assignment) => {
+                            const grade = getGradeForStudent(enrollment.student_id, assignment.id)
+                            return (
+                              <TableCell key={assignment.id} className="text-center">
+                                {grade ? (
+                                  <div>
+                                    <Badge variant={grade.status === 'submitted' ? 'default' : 'secondary'}>
+                                      {grade.points_earned}/{assignment.total_points}
+                                    </Badge>
+                                    {grade.feedback && (
+                                      <p className="text-xs text-muted-foreground mt-1 max-w-24 truncate">
+                                        {grade.feedback}
+                                      </p>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
-                              </button>
-                            )}
+                              </TableCell>
+                            )
+                          })}
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedStudent(enrollment)}
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Grade
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Grade Student</DialogTitle>
+                                  <DialogDescription>
+                                    Assign grades for {enrollment.student?.user?.full_name}
+                                  </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="assignment">Assignment</Label>
+                                    <Select
+                                      value={selectedAssignment?.id || ""}
+                                      onValueChange={(value) => {
+                                        const assignment = assignments.find(a => a.id === value)
+                                        setSelectedAssignment(assignment || null)
+                                      }}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select assignment..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {assignments.map((assignment) => (
+                                          <SelectItem key={assignment.id} value={assignment.id}>
+                                            {assignment.title} ({assignment.total_points} pts)
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="grade">Points Earned</Label>
+                                    <Input
+                                      id="grade"
+                                      type="number"
+                                      placeholder="Enter points..."
+                                      value={gradeValue}
+                                      onChange={(e) => setGradeValue(e.target.value)}
+                                      max={selectedAssignment?.total_points || 100}
+                                    />
+                                    {selectedAssignment && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Max: {selectedAssignment.total_points} points
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="feedback">Feedback (Optional)</Label>
+                                    <Textarea
+                                      id="feedback"
+                                      placeholder="Add feedback..."
+                                      value={feedback}
+                                      onChange={(e) => setFeedback(e.target.value)}
+                                      rows={3}
+                                    />
+                                  </div>
+
+                                  <Button
+                                    onClick={submitGrade}
+                                    disabled={savingGrade || !gradeValue || !selectedAssignment}
+                                    className="w-full"
+                                  >
+                                    {savingGrade ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        Saving...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Save className="w-4 h-4 mr-2" />
+                                        Submit Grade
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </TableCell>
-                        )
-                      })}
-                      <TableCell className="text-center">
-                        <Badge variant={getGradeBadgeVariant(student.currentGrade)}>{student.currentGrade}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={student.attendance >= 90 ? "text-accent font-medium" : ""}>
-                          {student.attendance}%
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   )

@@ -200,4 +200,76 @@ export class FacultyService {
 
     return { success: true }
   }
+
+  async createGrade(grade: {
+    student_id: string
+    assignment_id: string
+    points_earned?: number
+    feedback?: string
+    status: string
+  }): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase.from("grades").insert({
+      ...grade,
+      graded_at: new Date().toISOString()
+    })
+
+    if (error) {
+      console.error("Error creating grade:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async updateGrade(gradeId: string, updates: Partial<{
+    points_earned: number
+    feedback: string
+    status: string
+    graded_at: string
+  }>): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase.from("grades").update(updates).eq("id", gradeId)
+
+    if (error) {
+      console.error("Error updating grade:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async getGradesForCourse(courseId: string): Promise<Grade[]> {
+    const { data, error } = await this.supabase
+      .from("grades")
+      .select(`
+        *,
+        student:students(
+          *,
+          user:users(*)
+        ),
+        assignment:assignments(*)
+      `)
+      .eq("assignment.section_id", courseId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching course grades:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async deleteAssignment(assignmentId: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase
+      .from("assignments")
+      .delete()
+      .eq("id", assignmentId)
+
+    if (error) {
+      console.error("Error deleting assignment:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
 }

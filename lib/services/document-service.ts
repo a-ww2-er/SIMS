@@ -67,9 +67,9 @@ export class DocumentService {
     }
   }
 
-  async getFacultyUploads(facultyId: string): Promise<DocumentUpload[]> {
+  async getAllUploads(): Promise<DocumentUpload[]> {
     try {
-      // Faculty can now see all student uploads for review purposes
+      // Get all student uploads for review purposes (faculty and admins)
       const { data, error } = await this.supabase
         .from("document_uploads")
         .select(`
@@ -83,9 +83,14 @@ export class DocumentService {
       if (error) throw error
       return data || []
     } catch (error) {
-      console.error("Error fetching faculty uploads:", error)
+      console.error("Error fetching uploads:", error)
       return []
     }
+  }
+
+  // Keep the old method for backward compatibility but mark as deprecated
+  async getFacultyUploads(facultyId: string): Promise<DocumentUpload[]> {
+    return this.getAllUploads()
   }
 
   async updateDocumentStatus(

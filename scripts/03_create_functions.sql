@@ -128,3 +128,41 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER update_enrollment_count
   AFTER INSERT OR DELETE ON public.enrollments
   FOR EACH ROW EXECUTE FUNCTION public.update_section_enrollment();
+
+-- Function to enroll a student in a course section
+CREATE OR REPLACE FUNCTION public.enroll_student(p_student_id UUID, p_section_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_current_enrollment INTEGER;
+  v_max_enrollment INTEGER;
+BEGIN
+  -- Check current enrollment
+  SELECT current_enrollment, max_enrollment
+  INTO v_current_enrollment, v_max_enrollment
+  FROM public.course_sections
+  WHERE id = p_section_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Course section not found';
+  END IF;
+
+  -- Check if section is full
+  IF v_current_enrollment >= v_max_enrollment THEN
+    RAISE EXCEPTION 'Course section is full';
+  END IF;
+
+  -- Check if student is already enrolled
+  IF EXISTS (
+    SELECT 1 FROM public.enrollments
+    WHERE student_id = p_student_id AND section_id = p_section_id
+  ) THEN
+    RAISE EXCEPTION 'Student is already enrolled in this course';
+  END IF;
+
+  -- Insert enrollment
+  INSERT INTO public.enrollments (student_id, section_id, status)
+  VALUES (p_student_id, p_section_id, 'enrolled');
+
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

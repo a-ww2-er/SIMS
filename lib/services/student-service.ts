@@ -122,10 +122,10 @@ export class StudentService {
   }
 
   async enrollInCourse(studentId: string, sectionId: string): Promise<{ success: boolean; error?: string }> {
-    const { error } = await this.supabase.from("enrollments").insert({
-      student_id: studentId,
-      section_id: sectionId,
-      status: "enrolled",
+    // Start a transaction to enroll and update enrollment count
+    const { error } = await this.supabase.rpc('enroll_student', {
+      p_student_id: studentId,
+      p_section_id: sectionId
     })
 
     if (error) {
@@ -169,7 +169,7 @@ export class StudentService {
           user:users(*)
         )
       `)
-      .lt("current_enrollment", this.supabase.rpc("max_enrollment"))
+      .filter("current_enrollment", "lt", "max_enrollment")
       .order("created_at", { ascending: false })
 
     if (error) {
