@@ -1,11 +1,6 @@
 import { updateSession } from "./lib/supabase/middleware"
 
 export async function middleware(request: any) {
-  // Bypass authentication in development mode for UI testing
-  if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-    return
-  }
-
   return await updateSession(request)
 }
 
