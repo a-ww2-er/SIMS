@@ -251,15 +251,15 @@ export default function RegisterPage() {
                 Sign in here
               </button>
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Are you a faculty member?{" "}
+            {/* <p className="text-sm text-muted-foreground mt-2">
+              Are you an admin?{" "}
               <button
                 onClick={() => router.push("/auth/register-faculty")}
                 className="text-primary hover:underline font-medium"
               >
-                Register as Faculty
+                Register as an admin
               </button>
-            </p>
+            </p> */}
           </div>
         </CardContent>
       </Card>
