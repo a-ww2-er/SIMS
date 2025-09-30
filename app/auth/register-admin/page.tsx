@@ -61,7 +61,7 @@ export default function RegisterFacultyPage() {
       return
     }
 
-    setSuccess("Faculty registration successful! Please check your email to confirm your account.")
+    setSuccess("Admin registration successful! Please check your email to confirm your account.")
     setIsLoading(false)
   }
 
@@ -87,12 +87,12 @@ export default function RegisterFacultyPage() {
    
                <h2 className="text-5xl font-bold text-white mb-6 text-balance leading-tight">
                  {"Join our "}
-                 <span className="italic font-serif">faculty</span>
+                 <span className="italic font-serif">Admin</span>
                  {" team"}
                </h2>
    
                <p className="text-xl text-white/90 mb-8 text-pretty leading-relaxed">
-                 Empower the next generation of learners. Join our dedicated faculty community and make a lasting impact on student success.
+                 Empower the next generation of learners. Join our dedicated Admin community and make a lasting impact on student success.
                </p>
    
                <div className="space-y-4">
@@ -100,7 +100,7 @@ export default function RegisterFacultyPage() {
                  <div className="flex items-center gap-6 text-white/70">
                    <div className="text-center">
                      <div className="text-2xl font-bold">156</div>
-                     <div className="text-sm">Faculty Members</div>
+                     <div className="text-sm">Admin Members</div>
                    </div>
                    <div className="text-center">
                      <div className="text-2xl font-bold">342</div>
@@ -120,9 +120,9 @@ export default function RegisterFacultyPage() {
              <div className="w-full max-w-md">
              <Card className="w-full max-w-md bg-white shadow-2xl border-0">
         <CardHeader className="space-y-1 text-center pb-8">
-          <CardTitle className="text-3xl font-bold text-secondary">Faculty Registration</CardTitle>
+          <CardTitle className="text-3xl font-bold text-secondary">Admin Registration</CardTitle>
           <CardDescription className="text-muted-foreground text-lg">
-            Create your faculty account
+            Create your Admin account
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8">
@@ -228,12 +228,12 @@ export default function RegisterFacultyPage() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating faculty account...
+                  Creating Admin account...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-4 h-4" />
-                  Create Faculty Account
+                  Create Admin Account
                 </div>
               )}
             </Button>

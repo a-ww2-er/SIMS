@@ -88,8 +88,8 @@ export default function RegisterPage() {
                </div>
    
                <h2 className="text-5xl font-bold text-white mb-6 text-balance leading-tight">
-                 {"It's good to be "}
-                 <span className="italic font-serif">learning</span>
+                 {"Access records more "}
+                 <span className="italic font-serif">Easily</span>
                </h2>
    
                <p className="text-xl text-white/90 mb-8 text-pretty leading-relaxed">

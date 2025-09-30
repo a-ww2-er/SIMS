@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { BookOpen, Calendar, Clock, Users, Search, Filter, Download, Star, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/auth-context"
 import { StudentService } from "@/lib/services/student-service"
 import type { Enrollment, CourseSection } from "@/lib/types/database"
@@ -15,6 +16,7 @@ import Link from "next/link"
 
 export function StudentCourses() {
   const { user } = useAuth()
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [enrolledCourses, setEnrolledCourses] = useState<Enrollment[]>([])
   const [availableCourses, setAvailableCourses] = useState<CourseSection[]>([])
@@ -288,7 +290,11 @@ export function StudentCourses() {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/student/course/${enrollment.section?.course?.id}?sectionId=${enrollment.section?.id}`)}
+                        >
                           View Details
                         </Button>
                         {/* <Button size="sm" variant="outline">
@@ -400,12 +406,12 @@ export function StudentCourses() {
                           "Enroll Now"
                         )}
                       </Button>
-                      <Button size="sm" variant="outline">
+                      {/* <Button size="sm" variant="outline">
                         View Syllabus
                       </Button>
                       <Button size="sm" variant="outline">
                         Add to Wishlist
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 )

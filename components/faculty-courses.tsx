@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { BookOpen, Users, Calendar, FileText, Search, Plus, Settings, Download, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/auth-context"
 import { FacultyService } from "@/lib/services/faculty-service"
 import type { CourseSection } from "@/lib/types/database"
@@ -14,6 +15,7 @@ import Link from "next/link"
 
 export function FacultyCourses() {
   const { user } = useAuth()
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [myCourses, setMyCourses] = useState<CourseSection[]>([])
   const [pendingGrades, setPendingGrades] = useState(0)
@@ -229,7 +231,12 @@ export function FacultyCourses() {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button size="sm">Manage Course</Button>
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`/faculty/course/${section.id}`)}
+                    >
+                      Manage Course
+                    </Button>
                         <Button size="sm" variant="outline">
                           <Users className="w-4 h-4 mr-2" />
                           {section.current_enrollment} Students

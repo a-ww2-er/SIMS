@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `https://sims-blue-three.vercel.app/auth/callback`,
         data: {
           full_name: fullName,
           role: 'student',
@@ -281,7 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `https://sims-blue-three.vercel.app/auth/callback`,
         data: {
           full_name: fullName,
           role: 'faculty',

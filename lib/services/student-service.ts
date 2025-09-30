@@ -169,7 +169,6 @@ export class StudentService {
           user:users(*)
         )
       `)
-      .filter("current_enrollment", "lt", "max_enrollment")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -177,7 +176,12 @@ export class StudentService {
       return []
     }
 
-    return data || []
+    // Filter courses that have available spots (current_enrollment < max_enrollment)
+    const availableCourses = (data || []).filter(course =>
+      course.current_enrollment < course.max_enrollment
+    )
+
+    return availableCourses
   }
 
   async getCourseAssignments(courseSectionId: string): Promise<Assignment[]> {

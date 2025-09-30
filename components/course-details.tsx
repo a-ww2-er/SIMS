@@ -10,9 +10,9 @@ import { useAuth } from "@/lib/auth/auth-context"
 import { FacultyService } from "@/lib/services/faculty-service"
 import { StudentService } from "@/lib/services/student-service"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, BookOpen, Users, Calendar, Clock, MapPin, Award, FileText, User } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, Calendar, Clock, MapPin, Award, FileText, User, CheckCircle, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import type { Course, CourseSection, Enrollment } from "@/lib/types/database"
+import type { Course, CourseSection, Enrollment, Assignment } from "@/lib/types/database"
 
 interface CourseDetailsProps {
   courseId: string
@@ -26,6 +26,7 @@ export function CourseDetails({ courseId, sectionId, userType }: CourseDetailsPr
   const [course, setCourse] = useState<Course | null>(null)
   const [section, setSection] = useState<CourseSection | null>(null)
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
 
   const facultyService = new FacultyService()
@@ -76,6 +77,15 @@ console.log(courseData,courseId)
         if (userType === "faculty" && user) {
           const enrollmentsData = await facultyService.getCourseEnrollments(sectionId)
           setEnrollments(enrollmentsData)
+        }
+
+        // Load assignments for this section
+        if (userType === "student" && user) {
+          const assignmentsData = await studentService.getCourseAssignments(sectionId)
+          setAssignments(assignmentsData)
+        } else if (userType === "faculty" && user) {
+          const assignmentsData = await facultyService.getCourseAssignments(sectionId)
+          setAssignments(assignmentsData)
         }
       }
     } catch (error) {
@@ -208,8 +218,75 @@ console.log(courseData,courseId)
                         </div>
                       </div>
                     )}
+       
+                    {/* Assignments */}
+                    {assignments.length > 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <FileText className="w-5 h-5" />
+                            Assignments ({assignments.length})
+                          </CardTitle>
+                          <CardDescription>
+                            {userType === "student" ? "Your assignments for this course" : "Assignments for this course section"}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {assignments.map((assignment) => (
+                              <div key={assignment.id} className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-lg">{assignment.title}</h4>
+                                    {assignment.description && (
+                                      <p className="text-sm text-muted-foreground mt-1">{assignment.description}</p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <Badge variant="outline" className="mb-2">
+                                      {assignment.total_points} points
+                                    </Badge>
+                                    <p className="text-sm text-muted-foreground">
+                                      {assignment.type}
+                                    </p>
+                                  </div>
+                                </div>
+       
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-4">
+                                    {assignment.due_date && (
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4 text-muted-foreground" />
+                                        <span className="text-muted-foreground">
+                                          Due: {new Date(assignment.due_date).toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+       
+                                  {userType === "student" && (
+                                    <div className="flex items-center gap-2">
+                                      <CheckCircle className="w-4 h-4 text-green-600" />
+                                      <span className="text-sm text-muted-foreground">Submitted</span>
+                                    </div>
+                                  )}
+                                </div>
+       
+                                {userType === "faculty" && (
+                                  <div className="mt-3 pt-3 border-t">
+                                    <Button size="sm" variant="outline">
+                                      View Submissions
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+       
                   </div>
-
                   {section.schedule && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
