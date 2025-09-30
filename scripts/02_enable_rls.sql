@@ -10,6 +10,7 @@ ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Users can view their own profile" ON public.users
@@ -191,7 +192,25 @@ CREATE POLICY "Everyone can view relevant announcements" ON public.announcements
 CREATE POLICY "Faculty and admins can create announcements" ON public.announcements
   FOR INSERT WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.users 
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid() AND role IN ('admin', 'faculty')
+    )
+  );
+
+-- Notifications policies
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY "Users can create notifications for themselves" ON public.notifications
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Admins and faculty can create notifications for others" ON public.notifications
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.users
       WHERE id = auth.uid() AND role IN ('admin', 'faculty')
     )
   );

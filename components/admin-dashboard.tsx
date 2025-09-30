@@ -3,24 +3,47 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, AlertTriangle, Calendar, Building, DollarSign } from "lucide-react"
+import { TrendingUp, AlertTriangle, Calendar, Building, DollarSign, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth/auth-context"
+import { AdminService } from "@/lib/services/admin-service"
 
 export function AdminDashboard() {
-  const adminData = {
-    name: "Dr.Binyami Ajayi",
-    employeeId: "ADM2024001",
-    role: "System Administrator",
-    department: "Academic Affairs",
-  }
-
-  const systemStats = {
-    totalStudents: 2847,
-    totalFaculty: 156,
-    totalCourses: 342,
+  const { user, userProfile } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [systemStats, setSystemStats] = useState({
+    totalStudents: 0,
+    totalFaculty: 0,
+    totalCourses: 0,
     activeSemesters: 2,
     pendingApplications: 23,
     systemUptime: 99.8,
+  })
+
+  const adminService = new AdminService()
+
+  useEffect(() => {
+    loadAdminData()
+  }, [])
+
+  const loadAdminData = async () => {
+    try {
+      setLoading(true)
+      const stats = await adminService.getSystemStats()
+      setSystemStats(stats)
+    } catch (error) {
+      console.error("Error loading admin data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const adminData = {
+    name: userProfile?.full_name || "Administrator",
+    employeeId: userProfile?.id || "ADM001",
+    role: "System Administrator",
+    department: "Academic Affairs",
   }
 
   const departmentStats = [
@@ -79,42 +102,66 @@ export function AdminDashboard() {
 
         {/* System Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">{systemStats.totalStudents.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground font-medium">Total Students</div>
-              </div>
-            </CardContent>
-          </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="text-center">
+                 {loading ? (
+                   <div className="flex items-center justify-center">
+                     <Loader2 className="w-6 h-6 animate-spin" />
+                   </div>
+                 ) : (
+                   <>
+                     <div className="text-3xl font-bold text-primary mb-2">{systemStats.totalStudents.toLocaleString()}</div>
+                     <div className="text-sm text-muted-foreground font-medium">Total Students</div>
+                   </>
+                 )}
+               </div>
+             </CardContent>
+           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-accent mb-2">{systemStats.totalFaculty}</div>
-                <div className="text-sm text-muted-foreground font-medium">Faculty Members</div>
-              </div>
-            </CardContent>
-          </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="text-center">
+                 {loading ? (
+                   <div className="flex items-center justify-center">
+                     <Loader2 className="w-6 h-6 animate-spin" />
+                   </div>
+                 ) : (
+                   <>
+                     <div className="text-3xl font-bold text-accent mb-2">{systemStats.totalFaculty}</div>
+                     <div className="text-sm text-muted-foreground font-medium">Faculty Members</div>
+                   </>
+                 )}
+               </div>
+             </CardContent>
+           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-secondary mb-2">{systemStats.totalCourses}</div>
-                <div className="text-sm text-muted-foreground font-medium">Active Courses</div>
-              </div>
-            </CardContent>
-          </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="text-center">
+                 {loading ? (
+                   <div className="flex items-center justify-center">
+                     <Loader2 className="w-6 h-6 animate-spin" />
+                   </div>
+                 ) : (
+                   <>
+                     <div className="text-3xl font-bold text-secondary mb-2">{systemStats.totalCourses}</div>
+                     <div className="text-sm text-muted-foreground font-medium">Active Courses</div>
+                   </>
+                 )}
+               </div>
+             </CardContent>
+           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-destructive mb-2">{systemStats.pendingApplications}</div>
-                <div className="text-sm text-muted-foreground font-medium">Pending Applications</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+           <Card>
+             <CardContent className="p-6">
+               <div className="text-center">
+                 <div className="text-3xl font-bold text-destructive mb-2">{systemStats.pendingApplications}</div>
+                 <div className="text-sm text-muted-foreground font-medium">Pending Applications</div>
+               </div>
+             </CardContent>
+           </Card>
+         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Department Overview */}

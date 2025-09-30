@@ -12,6 +12,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { useAuth } from "@/lib/auth/auth-context"
 import { FacultyService } from "@/lib/services/faculty-service"
 import { DocumentService } from "@/lib/services/document-service"
+import { NotificationService } from "@/lib/services/notification-service"
 import { FileText, Download, Eye, CheckCircle, XCircle, Clock, AlertCircle, Loader2, MessageSquare } from "lucide-react"
 import type { DocumentUpload, DocumentStatus } from "@/lib/types/database"
 
@@ -25,6 +26,7 @@ export function FacultyUploads() {
 
   const facultyService = new FacultyService()
   const documentService = new DocumentService()
+  const notificationService = new NotificationService()
 
   useEffect(() => {
     if (user) {
@@ -63,6 +65,15 @@ export function FacultyUploads() {
     try {
       setUpdatingStatus(documentId)
 
+      // Get the current document to track status change
+      const currentUpload = uploads.find(u => u.id === documentId)
+      if (!currentUpload) {
+        alert("Document not found")
+        return
+      }
+
+      const oldStatus = currentUpload.status
+
       // Check if user is faculty (only faculty get recorded as reviewers)
       const facultyProfile = await facultyService.getFacultyProfile(user!.id)
       const reviewerId = facultyProfile ? facultyProfile.id : undefined
@@ -75,6 +86,22 @@ export function FacultyUploads() {
       )
 
       if (result.success) {
+        // Create notification for student about status change
+        try {
+          const studentUserId = currentUpload.student?.user_id
+          if (studentUserId) {
+            await notificationService.createStatusChangeNotification(
+              studentUserId,
+              currentUpload.title,
+              oldStatus,
+              status
+            )
+          }
+        } catch (notificationError) {
+          console.error("Error creating student notification:", notificationError)
+          // Don't fail the status update if notification creation fails
+        }
+
         // Reload uploads to reflect the change
         await loadFacultyUploads()
         setSelectedUpload(null)
@@ -164,9 +191,9 @@ export function FacultyUploads() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                {/* <div className="p-2 bg-blue-100 rounded-lg">
                   <FileText className="w-5 h-5 text-blue-600" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">{uploads.length}</div>
                   <div className="text-sm text-muted-foreground">Total Uploads</div>
@@ -178,9 +205,9 @@ export function FacultyUploads() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
+                {/* <div className="p-2 bg-yellow-100 rounded-lg">
                   <Clock className="w-5 h-5 text-yellow-600" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">{getUploadsByStatus("pending_review").length}</div>
                   <div className="text-sm text-muted-foreground">Pending Review</div>
@@ -192,9 +219,9 @@ export function FacultyUploads() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                {/* <div className="p-2 bg-green-100 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">{getUploadsByStatus("approved").length}</div>
                   <div className="text-sm text-muted-foreground">Approved</div>
@@ -206,9 +233,9 @@ export function FacultyUploads() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
+                {/* <div className="p-2 bg-red-100 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-red-600" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">
                     {getUploadsByStatus("rejected").length + getUploadsByStatus("revision_required").length}

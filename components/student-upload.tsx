@@ -12,6 +12,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { useAuth } from "@/lib/auth/auth-context"
 import { StudentService } from "@/lib/services/student-service"
 import { DocumentService } from "@/lib/services/document-service"
+import { NotificationService } from "@/lib/services/notification-service"
 import { cloudinaryService } from "@/lib/utils/cloudinary"
 import { Upload, FileText, X, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import type { CourseSection, Assignment } from "@/lib/types/database"
@@ -45,6 +46,7 @@ export function StudentUpload() {
 
   const studentService = new StudentService()
   const documentService = new DocumentService()
+  const notificationService = new NotificationService()
 
   useEffect(() => {
     if (user) {
@@ -195,6 +197,20 @@ export function StudentUpload() {
       setUploadProgress(100)
       setUploadStatus('success')
 
+      // Create notification for faculty about the new upload
+      try {
+        if (result.data) {
+          await notificationService.createDocumentUploadNotification(
+            result.data.id,
+            studentProfile.user?.full_name || "Unknown Student",
+            formData.title
+          )
+        }
+      } catch (notificationError) {
+        console.error("Error creating faculty notification:", notificationError)
+        // Don't fail the upload if notification creation fails
+      }
+
       // Reset form
       setFormData({
         course_section_id: "none",
@@ -224,7 +240,7 @@ export function StudentUpload() {
     { value: "exam", label: "Exam" },
     { value: "lab_report", label: "Lab Report" },
     { value: "presentation", label: "Presentation" },
-    { value: "bio_data", label: "Bio Data/CV" },
+    // { value: "bio_data", label: "Bio Data/CV" },
     { value: "certificate", label: "Certificate" },
     { value: "transcript", label: "Transcript" },
     { value: "recommendation", label: "Recommendation Letter" },

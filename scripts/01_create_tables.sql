@@ -145,16 +145,29 @@ CREATE TABLE public.attendance (
 
 -- Announcements table
 CREATE TABLE public.announcements (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  author_id UUID REFERENCES public.users(id),
-  target_audience TEXT NOT NULL, -- 'all', 'students', 'faculty', 'specific_course'
-  target_id UUID, -- course_section_id if target_audience is 'specific_course'
-  priority TEXT NOT NULL DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
-  expires_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+   title TEXT NOT NULL,
+   content TEXT NOT NULL,
+   author_id UUID REFERENCES public.users(id),
+   target_audience TEXT NOT NULL, -- 'all', 'students', 'faculty', 'specific_course'
+   target_id UUID, -- course_section_id if target_audience is 'specific_course'
+   priority TEXT NOT NULL DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
+   expires_at TIMESTAMP WITH TIME ZONE,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Notifications table
+CREATE TABLE public.notifications (
+   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+   title TEXT NOT NULL,
+   message TEXT NOT NULL,
+   type TEXT NOT NULL, -- 'document_upload', 'status_change', 'assignment_created', etc.
+   related_id UUID, -- document_id, upload_id, assignment_id, etc.
+   is_read BOOLEAN NOT NULL DEFAULT FALSE,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create indexes for better performance
@@ -169,3 +182,6 @@ CREATE INDEX idx_attendance_student_id ON public.attendance(student_id);
 CREATE INDEX idx_attendance_date ON public.attendance(date);
 CREATE INDEX idx_course_sections_faculty_id ON public.course_sections(faculty_id);
 CREATE INDEX idx_announcements_target ON public.announcements(target_audience, target_id);
+CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX idx_notifications_is_read ON public.notifications(is_read);
+CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);

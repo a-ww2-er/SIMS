@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/auth-context"
+import { NotificationBell } from "@/components/notification-bell"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -110,10 +111,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-4 h-4" />
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs">3</Badge>
-              </Button> */}
+               <NotificationBell />
 
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">

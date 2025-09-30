@@ -121,14 +121,14 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardContent className="p-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-secondary mb-2">{degreeProgress}%</div>
                 <div className="text-sm text-muted-foreground font-medium">Degree Progress</div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card>
             <CardContent className="p-6">

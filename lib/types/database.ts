@@ -160,6 +160,19 @@ export interface Announcement {
   author?: User
 }
 
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: string
+  related_id?: string
+  is_read: boolean
+  created_at: string
+  updated_at: string
+  user?: User
+}
+
 export interface DocumentUpload {
   id: string
   student_id: string

@@ -1,23 +1,41 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, Clock, TrendingUp, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BookOpen, Clock, TrendingUp, AlertCircle, CheckCircle, Loader2, Plus, Trash2, Megaphone } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth/auth-context"
 import { FacultyService } from "@/lib/services/faculty-service"
-import type { Faculty, CourseSection } from "@/lib/types/database"
+import { NotificationService } from "@/lib/services/notification-service"
+import type { Faculty, CourseSection, Announcement } from "@/lib/types/database"
 
 export function FacultyDashboard() {
   const { user, userProfile } = useAuth()
   const [facultyProfile, setFacultyProfile] = useState<Faculty | null>(null)
   const [courses, setCourses] = useState<CourseSection[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [pendingGrades, setPendingGrades] = useState(0)
+  const [totalStudents, setTotalStudents] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    content: "",
+    target_audience: "all",
+    priority: "normal"
+  })
+  const [creating, setCreating] = useState(false)
 
   const facultyService = new FacultyService()
+  const notificationService = new NotificationService()
 
   useEffect(() => {
     if (user) {
@@ -31,20 +49,86 @@ export function FacultyDashboard() {
     try {
       setLoading(true)
 
-      // Load faculty profile and courses in parallel
-      const [profile, facultyCourses, grades] = await Promise.all([
+      // Load faculty profile, all courses, total students, pending grades, and announcements in parallel
+      const [profile, allCourses, totalStudentsCount, grades, facultyAnnouncements] = await Promise.all([
         facultyService.getFacultyProfile(user.id),
-        facultyService.getFacultyCourses(user.id),
-        facultyService.getPendingGrades(user.id)
+        facultyService.getAllCourses(),
+        facultyService.getTotalStudentCount(),
+        facultyService.getPendingGrades(user.id),
+        facultyService.getFacultyAnnouncements(user.id)
       ])
 
       setFacultyProfile(profile)
-      setCourses(facultyCourses)
+      setCourses(allCourses)
+      setTotalStudents(totalStudentsCount)
       setPendingGrades(grades.length)
+      setAnnouncements(facultyAnnouncements)
     } catch (error) {
       console.error("Error loading faculty data:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateAnnouncement = async () => {
+    if (!user || !facultyProfile) return
+
+    try {
+      setCreating(true)
+      const result = await facultyService.createAnnouncement(newAnnouncement, user.id)
+
+      if (result.success) {
+        // Create notifications for target audience
+        try {
+          await notificationService.createAnnouncementNotification(
+            result.data?.id || "",
+            newAnnouncement.title,
+            newAnnouncement.content,
+            newAnnouncement.target_audience
+          )
+        } catch (notificationError) {
+          console.error("Error creating announcement notifications:", notificationError)
+          // Don't fail the announcement creation if notifications fail
+        }
+
+        // Reload announcements
+        const updatedAnnouncements = await facultyService.getFacultyAnnouncements(user.id)
+        setAnnouncements(updatedAnnouncements)
+
+        // Reset form and close dialog
+        setNewAnnouncement({
+          title: "",
+          content: "",
+          target_audience: "all",
+          priority: "normal"
+        })
+        setCreateDialogOpen(false)
+      } else {
+        alert(`Error creating announcement: ${result.error}`)
+      }
+    } catch (error) {
+      console.error("Error creating announcement:", error)
+      alert("Failed to create announcement")
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    if (!confirm("Are you sure you want to delete this announcement?")) return
+
+    try {
+      const result = await facultyService.deleteAnnouncement(announcementId)
+
+      if (result.success) {
+        // Remove from local state
+        setAnnouncements(prev => prev.filter(a => a.id !== announcementId))
+      } else {
+        alert(`Error deleting announcement: ${result.error}`)
+      }
+    } catch (error) {
+      console.error("Error deleting announcement:", error)
+      alert("Failed to delete announcement")
     }
   }
 
@@ -54,29 +138,10 @@ export function FacultyDashboard() {
     department: facultyProfile?.department || "Loading...",
     title: facultyProfile?.position || "Loading...",
     coursesThisSemester: courses.length,
-    totalStudents: courses.reduce((sum, course) => sum + course.current_enrollment, 0),
+    totalStudents: totalStudents,
   }
 
 
-  const upcomingTasks = []
-    // { title: "Grade CS301 Midterm Exams", dueDate: "Oct 15", priority: "high", type: "grading" },
-    // { title: "Prepare CS401 Lecture Notes", dueDate: "Oct 16", priority: "medium", type: "preparation" },
-    // { title: "Faculty Meeting", dueDate: "Oct 18", priority: "low", type: "meeting" },
-    // { title: "Submit Grade Reports", dueDate: "Oct 20", priority: "high", type: "administrative" },
-  // ]
-
-  const recentActivity = []
- // { action: "Graded Assignment 3", course: "CS301", time: "2 hours ago" },
- // { action: "Posted new lecture materials", course: "CS501", time: "4 hours ago" },
-// { action: "Responded to student questions", course: "CS401", time: "6 hours ago" },
-// { action: "Updated course syllabus", course: "CS301", time: "1 day ago" },
-  
-
-  const studentPerformance = []
- // { course: "CS301", avgGrade: 82, trend: "up", atRisk: 3 },
-// { course: "CS401", avgGrade: 78, trend: "stable", atRisk: 5 },
-    // { course: "CS501", avgGrade: 85, trend: "up", atRisk: 2 },
-  // ]
   
   return (
     <DashboardLayout>
@@ -92,7 +157,7 @@ export function FacultyDashboard() {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">{facultyData.totalStudents}</div>
-              <div className="text-sm text-secondary-foreground/80">Total Students</div>
+              <div className="text-sm text-secondary-foreground/80">Registered Students</div>
             </div>
           </div>
         </div>
@@ -112,7 +177,7 @@ export function FacultyDashboard() {
             <CardContent className="p-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent mb-2">{facultyData.totalStudents}</div>
-                <div className="text-sm text-muted-foreground font-medium">Total Students</div>
+                <div className="text-sm text-muted-foreground font-medium">Registered Students</div>
               </div>
             </CardContent>
           </Card>
@@ -132,9 +197,9 @@ export function FacultyDashboard() {
             <CardContent className="p-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-secondary mb-2">
-                  {upcomingTasks.filter((task) => task.priority === "high").length}
+                  {announcements.length}
                 </div>
-                <div className="text-sm text-muted-foreground font-medium">High Priority Tasks</div>
+                <div className="text-sm text-muted-foreground font-medium">Announcements</div>
               </div>
             </CardContent>
           </Card>
@@ -145,10 +210,10 @@ export function FacultyDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {/* <BookOpen className="w-5 h-5" /> */}
-                My Courses
+                <BookOpen className="w-5 h-5" />
+                All Courses
               </CardTitle>
-              <CardDescription>Courses you're teaching this semester</CardDescription>
+              <CardDescription>All courses available in the system</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {loading ? (
@@ -198,108 +263,167 @@ export function FacultyDashboard() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Tasks */}
-          {/* <Card>
+          {/* Announcements */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Upcoming Tasks
+                <Megaphone className="w-5 h-5" />
+                My Announcements
               </CardTitle>
-              <CardDescription>Your pending tasks and deadlines</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {upcomingTasks.map((task, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      task.priority === "high"
-                        ? "bg-destructive"
-                        : task.priority === "medium"
-                          ? "bg-primary"
-                          : "bg-accent"
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium">{task.title}</h4>
-                    <p className="text-sm text-muted-foreground">Due: {task.dueDate}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      task.priority === "high" ? "destructive" : task.priority === "medium" ? "default" : "secondary"
-                    }
-                    className="capitalize"
-                  >
-                    {task.priority}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card> */}
-             <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {/* <TrendingUp className="w-5 h-5" /> */}
-                Student Performance
-              </CardTitle>
-              <CardDescription>Class averages and at-risk students</CardDescription>
+              <CardDescription>Announcements you've created</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {studentPerformance && studentPerformance.map((perf) => (
-                <div key={perf.course} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold">{perf.course}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold">{perf.avgGrade}%</span>
-                      {perf.trend === "up" ? (
-                        <TrendingUp className="w-4 h-4 text-accent" />
-                      ) : (
-                        <div className="w-4 h-4 bg-muted rounded-full" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Progress value={perf.avgGrade} className="h-2" />
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Class Average</span>
-                      {perf.atRisk > 0 && (
-                        <div className="flex items-center gap-1 text-destructive">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{perf.atRisk} at risk</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="ml-2">Loading announcements...</span>
                 </div>
-              ))}
+              ) : announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No announcements yet.
+                </div>
+              ) : (
+                announcements.map((announcement) => (
+                  <div key={announcement.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{announcement.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{announcement.content}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {announcement.target_audience}
+                          </Badge>
+                          <Badge
+                            variant={
+                              announcement.priority === "urgent" ? "destructive" :
+                              announcement.priority === "high" ? "default" : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {announcement.priority}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAnnouncement(announcement.id)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Created: {new Date(announcement.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+
+              {/* Create New Announcement Button */}
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full" variant="outline">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Announcement
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create Announcement</DialogTitle>
+                    <DialogDescription>
+                      Create a new announcement for students, faculty, or everyone.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        value={newAnnouncement.title}
+                        onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Announcement title"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="content">Content</Label>
+                      <Textarea
+                        id="content"
+                        value={newAnnouncement.content}
+                        onChange={(e) => setNewAnnouncement(prev => ({ ...prev, content: e.target.value }))}
+                        placeholder="Announcement content..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="audience">Target Audience</Label>
+                      <Select
+                        value={newAnnouncement.target_audience}
+                        onValueChange={(value) => setNewAnnouncement(prev => ({ ...prev, target_audience: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Everyone</SelectItem>
+                          <SelectItem value="students">Students Only</SelectItem>
+                          <SelectItem value="faculty">Faculty Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select
+                        value={newAnnouncement.priority}
+                        onValueChange={(value) => setNewAnnouncement(prev => ({ ...prev, priority: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleCreateAnnouncement}
+                        disabled={creating || !newAnnouncement.title.trim() || !newAnnouncement.content.trim()}
+                        className="flex-1"
+                      >
+                        {creating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Announcement
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setCreateDialogOpen(false)}
+                        disabled={creating}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
-
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Student Performance Overview */}
-       
-          {/* Recent Activity */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-      
-                Recent Activity
-              </CardTitle>
-              <CardDescription>Your recent actions and updates</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <div className="flex-1">
-                    <h4 className="font-medium">{activity.action}</h4>
-                    <p className="text-sm text-muted-foreground">{activity.course}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card> */}
         </div>
       </div>
     </DashboardLayout>

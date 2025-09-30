@@ -176,18 +176,18 @@ export class FacultyService {
     target_id?: string
     priority?: string
     expires_at?: string
-  }, authorId: string): Promise<{ success: boolean; error?: string }> {
-    const { error } = await this.supabase.from("announcements").insert({
+  }, authorId: string): Promise<{ success: boolean; error?: string; data?: Announcement }> {
+    const { data, error } = await this.supabase.from("announcements").insert({
       ...announcement,
       author_id: authorId,
-    })
+    }).select().single()
 
     if (error) {
       console.error("Error creating announcement:", error)
       return { success: false, error: error.message }
     }
 
-    return { success: true }
+    return { success: true, data }
   }
 
   async updateProfile(facultyId: string, updates: Partial<Faculty>): Promise<{ success: boolean; error?: string }> {
@@ -271,5 +271,69 @@ export class FacultyService {
     }
 
     return { success: true }
+  }
+
+  async getFacultyAnnouncements(facultyId: string): Promise<Announcement[]> {
+    const { data, error } = await this.supabase
+      .from("announcements")
+      .select("*")
+      .eq("author_id", facultyId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching faculty announcements:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async deleteAnnouncement(announcementId: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await this.supabase
+      .from("announcements")
+      .delete()
+      .eq("id", announcementId)
+
+    if (error) {
+      console.error("Error deleting announcement:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  }
+
+  async getAllCourses(): Promise<CourseSection[]> {
+    const { data, error } = await this.supabase
+      .from("course_sections")
+      .select(`
+        *,
+        course:courses(*),
+        faculty:faculty(
+          *,
+          user:users(*)
+        )
+      `)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching all courses:", error)
+      return []
+    }
+
+    return data || []
+  }
+
+  async getTotalStudentCount(): Promise<number> {
+    const { count, error } = await this.supabase
+      .from("users")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "student")
+
+    if (error) {
+      console.error("Error fetching total student count:", error)
+      return 0
+    }
+
+    return count || 0
   }
 }

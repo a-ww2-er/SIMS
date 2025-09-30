@@ -126,10 +126,10 @@ export function StudentGrades() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm">
+            {/* <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Export Transcript
-            </Button>
+            </Button> */}
           </div>
         </div>
 

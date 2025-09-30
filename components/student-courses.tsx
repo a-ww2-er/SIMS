@@ -122,7 +122,7 @@ export function StudentCourses() {
             <h1 className="text-3xl font-bold">My Courses</h1>
             <p className="text-muted-foreground">Manage your enrolled courses and explore new ones</p>
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Export Schedule
@@ -131,7 +131,7 @@ export function StudentCourses() {
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Search */}
@@ -150,9 +150,9 @@ export function StudentCourses() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
+                {/* <div className="p-2 bg-primary/10 rounded-lg">
                   <BookOpen className="w-5 h-5 text-primary" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">{enrolledCourses.length}</div>
                   <div className="text-sm text-muted-foreground">Enrolled Courses</div>
@@ -164,9 +164,9 @@ export function StudentCourses() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent/10 rounded-lg">
+                {/* <div className="p-2 bg-accent/10 rounded-lg">
                   <Star className="w-5 h-5 text-accent" />
-                </div>
+                </div> */}
                 <div>
                   <div className="text-2xl font-bold">
                     {enrolledCourses.reduce((sum, enrollment) => {
@@ -180,7 +180,7 @@ export function StudentCourses() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-secondary/10 rounded-lg">
@@ -194,23 +194,23 @@ export function StudentCourses() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
-          <Card>
+          {/* <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
+                {/* <div className="p-2 bg-primary/10 rounded-lg">
                   <Calendar className="w-5 h-5 text-primary" />
-                </div>
+                </div> 
                 <div>
                   <div className="text-2xl font-bold">
-                    {enrolledCourses.length * 2} {/* Placeholder for pending tasks */}
+                    {enrolledCourses.length * 2}
                   </div>
                   <div className="text-sm text-muted-foreground">Pending Tasks</div>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Enrolled Courses */}
@@ -291,9 +291,9 @@ export function StudentCourses() {
                         <Button size="sm" variant="outline">
                           View Details
                         </Button>
-                        <Button size="sm" variant="outline">
+                        {/* <Button size="sm" variant="outline">
                           Course Materials
-                        </Button>
+                        </Button> */}
                         <Button size="sm" variant="outline">
                           Assignments
                         </Button>

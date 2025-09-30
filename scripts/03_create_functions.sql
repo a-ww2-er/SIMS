@@ -166,3 +166,141 @@ BEGIN
   RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create notifications for document uploads
+CREATE OR REPLACE FUNCTION public.notify_faculty_document_upload(
+  p_document_id UUID,
+  p_uploader_name TEXT,
+  p_document_title TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+  faculty_record RECORD;
+BEGIN
+  -- Create notifications for all faculty members
+  FOR faculty_record IN
+    SELECT u.id, u.full_name
+    FROM public.users u
+    WHERE u.role = 'faculty'
+  LOOP
+    INSERT INTO public.notifications (
+      user_id,
+      title,
+      message,
+      type,
+      related_id
+    ) VALUES (
+      faculty_record.id,
+      'New Document Upload',
+      p_uploader_name || ' uploaded "' || p_document_title || '" for review',
+      'document_upload',
+      p_document_id
+    );
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create notifications for announcements
+CREATE OR REPLACE FUNCTION public.notify_users_announcement(
+  p_announcement_id UUID,
+  p_title TEXT,
+  p_content TEXT,
+  p_target_audience TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+  user_record RECORD;
+  notification_title TEXT;
+  notification_message TEXT;
+BEGIN
+  -- Format the title with emoji
+  notification_title := '📢 ' || p_title;
+
+  -- Truncate content if too long
+  IF LENGTH(p_content) > 100 THEN
+    notification_message := SUBSTRING(p_content, 1, 100) || '...';
+  ELSE
+    notification_message := p_content;
+  END IF;
+
+  -- Create notifications based on target audience
+  IF p_target_audience = 'all' THEN
+    FOR user_record IN
+      SELECT id FROM public.users
+    LOOP
+      INSERT INTO public.notifications (
+        user_id,
+        title,
+        message,
+        type,
+        related_id
+      ) VALUES (
+        user_record.id,
+        notification_title,
+        notification_message,
+        'announcement',
+        p_announcement_id
+      );
+    END LOOP;
+  ELSIF p_target_audience = 'students' THEN
+    FOR user_record IN
+      SELECT u.id FROM public.users u WHERE u.role = 'student'
+    LOOP
+      INSERT INTO public.notifications (
+        user_id,
+        title,
+        message,
+        type,
+        related_id
+      ) VALUES (
+        user_record.id,
+        notification_title,
+        notification_message,
+        'announcement',
+        p_announcement_id
+      );
+    END LOOP;
+  ELSIF p_target_audience = 'faculty' THEN
+    FOR user_record IN
+      SELECT u.id FROM public.users u WHERE u.role = 'faculty'
+    LOOP
+      INSERT INTO public.notifications (
+        user_id,
+        title,
+        message,
+        type,
+        related_id
+      ) VALUES (
+        user_record.id,
+        notification_title,
+        notification_message,
+        'announcement',
+        p_announcement_id
+      );
+    END LOOP;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create notification for document status changes
+CREATE OR REPLACE FUNCTION public.notify_student_status_change(
+  p_student_user_id UUID,
+  p_document_title TEXT,
+  p_old_status TEXT,
+  p_new_status TEXT
+)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO public.notifications (
+    user_id,
+    title,
+    message,
+    type
+  ) VALUES (
+    p_student_user_id,
+    'Document Status Updated',
+    'Your document "' || p_document_title || '" status changed from ' || p_old_status || ' to ' || p_new_status,
+    'status_change'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

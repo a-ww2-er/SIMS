@@ -77,12 +77,12 @@ export function FacultyCourses() {
             <h1 className="text-3xl font-bold">My Courses</h1>
             <p className="text-muted-foreground">Manage your assigned courses and course materials</p>
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Export Data
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Search */}
